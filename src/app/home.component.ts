@@ -12,26 +12,96 @@ import { Company, CompaniesService } from './companies.service';
     <div class="page">
       <header class="hero">
         <h1>Database consulenza ESG</h1>
-        <p>Seleziona una società dall’elenco per aprire la relativa scheda.</p>
+        <p>Filtra l’elenco e seleziona una società per aprire la relativa scheda.</p>
       </header>
 
       <section class="filters">
-        <label for="companySelect">Seleziona società</label>
-
         <p *ngIf="loading">Caricamento elenco società...</p>
         <p *ngIf="error">{{ error }}</p>
 
-        <div class="select-row" *ngIf="!loading && !error">
-          <select id="companySelect" [(ngModel)]="selectedCompanyId">
-            <option [ngValue]="null">Scegli una società</option>
-            <option *ngFor="let company of companies" [ngValue]="company.id">
-              {{ company.displayName }}
-            </option>
-          </select>
+        <div *ngIf="!loading && !error">
+          <div class="filters-grid">
+            <div>
+              <label for="fasciaFatturatoTotale">Fatturato totale</label>
+              <select
+                id="fasciaFatturatoTotale"
+                [(ngModel)]="selectedFasciaFatturatoTotale"
+                (ngModelChange)="onFiltersChange()"
+              >
+                <option value="">Tutte</option>
+                <option *ngFor="let option of fasceFatturatoTotale" [value]="option">
+                  {{ option }}
+                </option>
+              </select>
+            </div>
 
-          <button (click)="goToSelectedCompany()" [disabled]="selectedCompanyId === null">
-            Apri scheda
-          </button>
+            <div>
+              <label for="fatturatoEsg">Fatturato ESG</label>
+              <select
+                id="fatturatoEsg"
+                [(ngModel)]="selectedFatturatoEsg"
+                (ngModelChange)="onFiltersChange()"
+              >
+                <option value="">Tutte</option>
+                <option *ngFor="let option of fatturatiEsg" [value]="option">
+                  {{ option }}
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label for="dipendentiTotali">Dipendenti totali</label>
+              <select
+                id="dipendentiTotali"
+                [(ngModel)]="selectedDipendentiTotali"
+                (ngModelChange)="onFiltersChange()"
+              >
+                <option value="">Tutte</option>
+                <option *ngFor="let option of fasceDipendentiTotali" [value]="option">
+                  {{ option }}
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label for="dipendentiEsg">Dipendenti ESG</label>
+              <select
+                id="dipendentiEsg"
+                [(ngModel)]="selectedDipendentiEsg"
+                (ngModelChange)="onFiltersChange()"
+              >
+                <option value="">Tutte</option>
+                <option *ngFor="let option of fasceDipendentiEsg" [value]="option">
+                  {{ option }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="secondary" (click)="resetFilters()">
+              Azzera filtri
+            </button>
+          </div>
+
+          <label for="companySelect">Seleziona società</label>
+
+          <div class="select-row">
+            <select id="companySelect" [(ngModel)]="selectedCompanyId">
+              <option [ngValue]="null">Scegli una società</option>
+              <option *ngFor="let company of filteredCompanies" [ngValue]="company.id">
+                {{ company.displayName }}
+              </option>
+            </select>
+
+            <button (click)="goToSelectedCompany()" [disabled]="selectedCompanyId === null">
+              Apri scheda
+            </button>
+          </div>
+
+          <p class="results-count">
+            Società trovate: {{ filteredCompanies.length }}
+          </p>
         </div>
       </section>
     </div>
@@ -79,6 +149,13 @@ import { Company, CompaniesService } from './companies.service';
       margin-bottom: 24px;
     }
 
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
     label {
       display: block;
       font-weight: 700;
@@ -101,6 +178,12 @@ import { Company, CompaniesService } from './companies.service';
       gap: 12px;
     }
 
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 20px;
+    }
+
     button {
       border: none;
       border-radius: 12px;
@@ -111,14 +194,37 @@ import { Company, CompaniesService } from './companies.service';
       cursor: pointer;
     }
 
+    .secondary {
+      background: #e2e8f0;
+      color: #1f2937;
+    }
+
     button:disabled {
       background: #94a3b8;
       cursor: not-allowed;
     }
 
+    .results-count {
+      margin: 14px 0 0;
+      color: #475569;
+      font-size: 0.95rem;
+    }
+
     @media (max-width: 700px) {
+      .filters-grid {
+        grid-template-columns: 1fr;
+      }
+
       .select-row {
         grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .actions button {
+        width: 100%;
       }
     }
   `],
@@ -129,9 +235,20 @@ export class HomeComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
 
   companies: Company[] = [];
+  filteredCompanies: Company[] = [];
   loading = true;
   error = '';
   selectedCompanyId: number | null = null;
+
+  selectedFasciaFatturatoTotale = '';
+  selectedFatturatoEsg = '';
+  selectedDipendentiTotali = '';
+  selectedDipendentiEsg = '';
+
+  fasceFatturatoTotale: string[] = [];
+  fatturatiEsg: string[] = [];
+  fasceDipendentiTotali: string[] = [];
+  fasceDipendentiEsg: string[] = [];
 
   ngOnInit(): void {
     this.companiesService.getCompanies().subscribe({
@@ -141,6 +258,13 @@ export class HomeComponent implements OnInit {
             sensitivity: 'base',
           })
         );
+
+        this.fasceFatturatoTotale = this.getUniqueOptions(this.companies, 'fasciaFatturatoTotaleItalia');
+        this.fatturatiEsg = this.getUniqueOptions(this.companies, 'fatturatoEsgItalia');
+        this.fasceDipendentiTotali = this.getUniqueOptions(this.companies, 'fasciaDipendentiTotaliItalia');
+        this.fasceDipendentiEsg = this.getUniqueOptions(this.companies, 'fasciaDipendentiEsgItalia');
+
+        this.applyFilters();
 
         this.loading = false;
         this.cdr.detectChanges();
@@ -158,5 +282,61 @@ export class HomeComponent implements OnInit {
     if (this.selectedCompanyId !== null) {
       this.router.navigate(['/societa', this.selectedCompanyId]);
     }
+  }
+
+  onFiltersChange(): void {
+    this.applyFilters();
+  }
+
+  resetFilters(): void {
+    this.selectedFasciaFatturatoTotale = '';
+    this.selectedFatturatoEsg = '';
+    this.selectedDipendentiTotali = '';
+    this.selectedDipendentiEsg = '';
+    this.selectedCompanyId = null;
+    this.applyFilters();
+  }
+
+  private applyFilters(): void {
+    this.filteredCompanies = this.companies.filter((company) => {
+      const matchesFasciaFatturatoTotale =
+        !this.selectedFasciaFatturatoTotale ||
+        (company as any).fasciaFatturatoTotaleItalia === this.selectedFasciaFatturatoTotale;
+
+      const matchesFatturatoEsg =
+        !this.selectedFatturatoEsg ||
+        (company as any).fatturatoEsgItalia === this.selectedFatturatoEsg;
+
+      const matchesDipendentiTotali =
+        !this.selectedDipendentiTotali ||
+        (company as any).fasciaDipendentiTotaliItalia === this.selectedDipendentiTotali;
+
+      const matchesDipendentiEsg =
+        !this.selectedDipendentiEsg ||
+        (company as any).fasciaDipendentiEsgItalia === this.selectedDipendentiEsg;
+
+      return (
+        matchesFasciaFatturatoTotale &&
+        matchesFatturatoEsg &&
+        matchesDipendentiTotali &&
+        matchesDipendentiEsg
+      );
+    });
+
+    const selectedStillVisible = this.filteredCompanies.some(
+      (company) => company.id === this.selectedCompanyId
+    );
+
+    if (!selectedStillVisible) {
+      this.selectedCompanyId = null;
+    }
+  }
+
+  private getUniqueOptions(companies: Company[], key: string): string[] {
+    return [...new Set(
+      companies
+        .map((company) => ((company as any)[key] || '').trim())
+        .filter((value) => value !== '')
+    )].sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
   }
 }
