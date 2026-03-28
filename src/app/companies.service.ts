@@ -26,6 +26,16 @@ export interface Company {
   servizi: string[];
 }
 
+type ApiCompany = Partial<Company> & {
+  annoInizioConsulenzaEsg?: string;
+  fasciaFatturatoTotaleItalia?: string;
+  fatturatoEsgItalia?: string;
+  progettoEsg2024?: string;
+  particolarita?: string;
+  fasciaDipendentiTotaliItalia?: string;
+  fasciaDipendentiEsgItalia?: string;
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -34,52 +44,79 @@ export class CompaniesService {
   private apiUrl = `${environment.apiUrl}/companies`;
 
   getCompanies(): Observable<Company[]> {
-    return this.http.get<Company[]>(this.apiUrl).pipe(
+    return this.http.get<ApiCompany[]>(this.apiUrl).pipe(
       map((companies) => companies.map((company) => this.normalizeCompany(company)))
     );
   }
 
   getCompanyById(id: number): Observable<Company> {
-    return this.http.get<Company>(`${this.apiUrl}/${id}`).pipe(
+    return this.http.get<ApiCompany>(`${this.apiUrl}/${id}`).pipe(
       map((company) => this.normalizeCompany(company))
     );
   }
 
-private normalizeCompany(company: Partial<Company>): Company {
-  const id = Number(company.id) || 0;
-  const nomeSocieta = (company.nomeSocieta || '').trim();
-  const brandConsulenzaEsg = (company.brandConsulenzaEsg || '').trim();
-  const sitoWeb = (company.sitoWeb || '').trim();
-  const annoFondazione = (company.annoFondazione || '').trim();
-  const annoInizioAttivitaEsg =
-    (company.annoInizioAttivitaEsg || '').trim() || annoFondazione;
+  private normalizeCompany(company: ApiCompany): Company {
+    const id = Number(company.id) || 0;
+    const nomeSocieta = (company.nomeSocieta || '').trim();
+    const brandConsulenzaEsg = (company.brandConsulenzaEsg || '').trim();
+    const sitoWeb = (company.sitoWeb || '').trim();
+    const annoFondazione = (company.annoFondazione || '').trim();
 
-  return {
-    id,
-    nomeSocieta,
-    brandConsulenzaEsg,
-    displayName:
-      (company.displayName || '').trim() ||
-      nomeSocieta ||
-      brandConsulenzaEsg ||
-      sitoWeb ||
-      `Società ${id}`,
-    sitoWeb,
-    email: (company.email || '').trim(),
-    telefono: (company.telefono || '').trim(),
-    annoFondazione,
-    annoInizioAttivitaEsg,
-    fasciaFatturatoComplessivo: (company.fasciaFatturatoComplessivo || '').trim(),
-    fatturatoEsg: (company.fatturatoEsg || '').trim(),
-    progettoEsgSignificativo: (company.progettoEsgSignificativo || '').trim(),
-    particolaritaConsulenzaEsg: (company.particolaritaConsulenzaEsg || '').trim(),
-    fasciaNumeroDipendentiTotale: (company.fasciaNumeroDipendentiTotale || '').trim(),
-    fasciaNumeroDipendentiEsg: (company.fasciaNumeroDipendentiEsg || '').trim(),
-    purpose: (company.purpose || '').trim(),
-    rendicontaFattoriEsg: (company.rendicontaFattoriEsg || '').trim(),
-    sedi: Array.isArray(company.sedi) ? company.sedi.filter(Boolean) : [],
-    clienti: Array.isArray(company.clienti) ? company.clienti.filter(Boolean) : [],
-    servizi: Array.isArray(company.servizi) ? company.servizi.filter(Boolean) : [],
-  };
-}
+    const annoInizioAttivitaEsg =
+      (company.annoInizioAttivitaEsg || '').trim() ||
+      (company.annoInizioConsulenzaEsg || '').trim() ||
+      annoFondazione;
+
+    const fasciaFatturatoComplessivo =
+      (company.fasciaFatturatoComplessivo || '').trim() ||
+      (company.fasciaFatturatoTotaleItalia || '').trim();
+
+    const fatturatoEsg =
+      (company.fatturatoEsg || '').trim() ||
+      (company.fatturatoEsgItalia || '').trim();
+
+    const progettoEsgSignificativo =
+      (company.progettoEsgSignificativo || '').trim() ||
+      (company.progettoEsg2024 || '').trim();
+
+    const particolaritaConsulenzaEsg =
+      (company.particolaritaConsulenzaEsg || '').trim() ||
+      (company.particolarita || '').trim();
+
+    const fasciaNumeroDipendentiTotale =
+      (company.fasciaNumeroDipendentiTotale || '').trim() ||
+      (company.fasciaDipendentiTotaliItalia || '').trim();
+
+    const fasciaNumeroDipendentiEsg =
+      (company.fasciaNumeroDipendentiEsg || '').trim() ||
+      (company.fasciaDipendentiEsgItalia || '').trim();
+
+    return {
+      id,
+      nomeSocieta,
+      brandConsulenzaEsg,
+      displayName:
+        (company.displayName || '').trim() ||
+        brandConsulenzaEsg ||
+        nomeSocieta ||
+        sitoWeb ||
+        `Società ${id}`,
+      sitoWeb,
+      email: (company.email || '').trim(),
+      telefono: (company.telefono || '').trim(),
+      annoFondazione,
+      annoInizioAttivitaEsg,
+      fasciaFatturatoComplessivo,
+      fatturatoEsg,
+      progettoEsgSignificativo,
+      particolaritaConsulenzaEsg,
+      fasciaNumeroDipendentiTotale,
+      fasciaNumeroDipendentiEsg,
+      purpose: (company.purpose || '').trim(),
+      rendicontaFattoriEsg: (company.rendicontaFattoriEsg || '').trim(),
+      sedi: Array.isArray(company.sedi) ? company.sedi.filter(Boolean) : [],
+      clienti: Array.isArray(company.clienti) ? company.clienti.filter(Boolean) : [],
+      servizi: Array.isArray(company.servizi) ? company.servizi.filter(Boolean) : [],
+    };
+  }
 }

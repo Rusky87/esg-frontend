@@ -259,13 +259,23 @@ export class HomeComponent implements OnInit {
           })
         );
 
-        this.fasceFatturatoTotale = this.getUniqueOptions(this.companies, 'fasciaFatturatoTotaleItalia');
-        this.fatturatiEsg = this.getUniqueOptions(this.companies, 'fatturatoEsgItalia');
-        this.fasceDipendentiTotali = this.getUniqueOptions(this.companies, 'fasciaDipendentiTotaliItalia');
-        this.fasceDipendentiEsg = this.getUniqueOptions(this.companies, 'fasciaDipendentiEsgItalia');
+        this.fasceFatturatoTotale = this.getUniqueOptions(
+          this.companies.map((c) => c.fasciaFatturatoComplessivo)
+        );
+
+        this.fatturatiEsg = this.getUniqueOptions(
+          this.companies.map((c) => c.fatturatoEsg)
+        );
+
+        this.fasceDipendentiTotali = this.getUniqueOptions(
+          this.companies.map((c) => c.fasciaNumeroDipendentiTotale)
+        );
+
+        this.fasceDipendentiEsg = this.getUniqueOptions(
+          this.companies.map((c) => c.fasciaNumeroDipendentiEsg)
+        );
 
         this.applyFilters();
-
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -301,19 +311,19 @@ export class HomeComponent implements OnInit {
     this.filteredCompanies = this.companies.filter((company) => {
       const matchesFasciaFatturatoTotale =
         !this.selectedFasciaFatturatoTotale ||
-        (company as any).fasciaFatturatoTotaleItalia === this.selectedFasciaFatturatoTotale;
+        company.fasciaFatturatoComplessivo === this.selectedFasciaFatturatoTotale;
 
       const matchesFatturatoEsg =
         !this.selectedFatturatoEsg ||
-        (company as any).fatturatoEsgItalia === this.selectedFatturatoEsg;
+        company.fatturatoEsg === this.selectedFatturatoEsg;
 
       const matchesDipendentiTotali =
         !this.selectedDipendentiTotali ||
-        (company as any).fasciaDipendentiTotaliItalia === this.selectedDipendentiTotali;
+        company.fasciaNumeroDipendentiTotale === this.selectedDipendentiTotali;
 
       const matchesDipendentiEsg =
         !this.selectedDipendentiEsg ||
-        (company as any).fasciaDipendentiEsgItalia === this.selectedDipendentiEsg;
+        company.fasciaNumeroDipendentiEsg === this.selectedDipendentiEsg;
 
       return (
         matchesFasciaFatturatoTotale &&
@@ -332,10 +342,10 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  private getUniqueOptions(companies: Company[], key: string): string[] {
+  private getUniqueOptions(values: string[]): string[] {
     return [...new Set(
-      companies
-        .map((company) => ((company as any)[key] || '').trim())
+      values
+        .map((value) => (value || '').trim())
         .filter((value) => value !== '')
     )].sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
   }
