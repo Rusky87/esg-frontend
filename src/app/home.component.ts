@@ -20,6 +20,21 @@ import { Company, CompaniesService } from './companies.service';
         <p *ngIf="error">{{ error }}</p>
 
         <div *ngIf="!loading && !error">
+          <label for="companySelect">Seleziona società</label>
+
+          <div class="select-row top-select">
+            <select id="companySelect" [(ngModel)]="selectedCompanyId">
+              <option [ngValue]="null">Scegli una società</option>
+              <option *ngFor="let company of filteredCompanies" [ngValue]="company.id">
+                {{ company.displayName }}
+              </option>
+            </select>
+
+            <button (click)="goToSelectedCompany()" [disabled]="selectedCompanyId === null">
+              Apri scheda
+            </button>
+          </div>
+
           <div class="filters-grid">
             <div>
               <label for="fasciaFatturatoTotale">Fatturato totale</label>
@@ -78,30 +93,41 @@ import { Company, CompaniesService } from './companies.service';
             </div>
           </div>
 
+          <div class="services-filter">
+            <label>Servizi</label>
+
+            <div class="services-grid">
+              <label class="checkbox-item" *ngFor="let servizio of serviziOptions">
+                <input
+                  type="checkbox"
+                  [checked]="selectedServizi.includes(servizio)"
+                  (change)="onServiceToggle(servizio, $any($event.target).checked)"
+                />
+                <span>{{ servizio }}</span>
+              </label>
+            </div>
+          </div>
+
           <div class="actions">
             <button type="button" class="secondary" (click)="resetFilters()">
               Azzera filtri
             </button>
           </div>
 
-          <label for="companySelect">Seleziona società</label>
-
-          <div class="select-row">
-            <select id="companySelect" [(ngModel)]="selectedCompanyId">
-              <option [ngValue]="null">Scegli una società</option>
-              <option *ngFor="let company of filteredCompanies" [ngValue]="company.id">
-                {{ company.displayName }}
-              </option>
-            </select>
-
-            <button (click)="goToSelectedCompany()" [disabled]="selectedCompanyId === null">
-              Apri scheda
-            </button>
-          </div>
-
           <p class="results-count">
             Società trovate: {{ filteredCompanies.length }}
           </p>
+
+          <div class="company-buttons" *ngIf="filteredCompanies.length > 0">
+            <button
+              type="button"
+              class="company-chip"
+              *ngFor="let company of filteredCompanies"
+              (click)="openCompany(company.id)"
+            >
+              {{ company.displayName }}
+            </button>
+          </div>
         </div>
       </section>
     </div>
@@ -149,6 +175,10 @@ import { Company, CompaniesService } from './companies.service';
       margin-bottom: 24px;
     }
 
+    .top-select {
+      margin-bottom: 20px;
+    }
+
     .filters-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -170,6 +200,34 @@ import { Company, CompaniesService } from './companies.service';
       font-size: 1rem;
       background: #fff;
       box-sizing: border-box;
+    }
+
+    .services-filter {
+      margin-bottom: 20px;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px 16px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-weight: 400;
+      margin-bottom: 0;
+    }
+
+    .checkbox-item input {
+      margin-top: 3px;
+      width: auto;
+      flex: 0 0 auto;
+    }
+
+    .checkbox-item span {
+      line-height: 1.35;
     }
 
     .select-row {
@@ -195,8 +253,8 @@ import { Company, CompaniesService } from './companies.service';
     }
 
     .secondary {
-      background: #e2e8f0;
-      color: #1f2937;
+      background: #dc2626;
+      color: white;
     }
 
     button:disabled {
@@ -205,13 +263,31 @@ import { Company, CompaniesService } from './companies.service';
     }
 
     .results-count {
-      margin: 14px 0 0;
+      margin: 14px 0 16px;
       color: #475569;
       font-size: 0.95rem;
     }
 
+    .company-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .company-chip {
+      background: #e0f2fe;
+      color: #0f172a;
+      border: 1px solid #bae6fd;
+      padding: 10px 14px;
+      border-radius: 999px;
+    }
+
     @media (max-width: 700px) {
       .filters-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .services-grid {
         grid-template-columns: 1fr;
       }
 
@@ -244,11 +320,43 @@ export class HomeComponent implements OnInit {
   selectedFatturatoEsg = '';
   selectedDipendentiTotali = '';
   selectedDipendentiEsg = '';
+  selectedServizi: string[] = [];
 
   fasceFatturatoTotale: string[] = [];
   fatturatiEsg: string[] = [];
   fasceDipendentiTotali: string[] = [];
   fasceDipendentiEsg: string[] = [];
+  serviziOptions: string[] = [];
+
+  private readonly allowedServizi = [
+    'Asseverazione bilanci di sostenibilità',
+    'Carbon footprint neutrality',
+    'Certificazione/asseverazione',
+    'Comunicazione',
+    'Consulenza Finanziaria',
+    'Consulenza su società benefit',
+    'Compliance',
+    'Diversity & Inclusion policy',
+    'Esg Data Management',
+    'Efficientamento energetico',
+    'Governance Esg',
+    'HR formazione',
+    'Investor relation',
+    'Life Cycle Assessment',
+    'Procurement',
+    'Rating di sostenibilità e Esg emissione',
+    'Rating di sostenibilità e Esg supporto',
+    'Rendicontazione/reporting',
+    'Risk management',
+    'Shareholder engagement',
+    'Stakeholder engagement',
+    'Strategia: piani, obiettivi, azioni',
+    'Supply chain analysis/management',
+    'Sviluppo di tool/applicativi/software per raccolta dati ESG',
+    'Third Party Opinion',
+    'Waste management',
+    'Water management',
+  ];
 
   ngOnInit(): void {
     this.companiesService.getCompanies().subscribe({
@@ -275,6 +383,8 @@ export class HomeComponent implements OnInit {
           this.companies.map((c) => c.fasciaNumeroDipendentiEsg)
         );
 
+        this.serviziOptions = this.allowedServizi;
+
         this.applyFilters();
         this.loading = false;
         this.cdr.detectChanges();
@@ -294,7 +404,23 @@ export class HomeComponent implements OnInit {
     }
   }
 
+  openCompany(id: number): void {
+    this.router.navigate(['/societa', id]);
+  }
+
   onFiltersChange(): void {
+    this.applyFilters();
+  }
+
+  onServiceToggle(servizio: string, checked: boolean): void {
+    if (checked) {
+      if (!this.selectedServizi.includes(servizio)) {
+        this.selectedServizi = [...this.selectedServizi, servizio];
+      }
+    } else {
+      this.selectedServizi = this.selectedServizi.filter((s) => s !== servizio);
+    }
+
     this.applyFilters();
   }
 
@@ -303,6 +429,7 @@ export class HomeComponent implements OnInit {
     this.selectedFatturatoEsg = '';
     this.selectedDipendentiTotali = '';
     this.selectedDipendentiEsg = '';
+    this.selectedServizi = [];
     this.selectedCompanyId = null;
     this.applyFilters();
   }
@@ -325,11 +452,22 @@ export class HomeComponent implements OnInit {
         !this.selectedDipendentiEsg ||
         company.fasciaNumeroDipendentiEsg === this.selectedDipendentiEsg;
 
+      const normalizedCompanyServizi = (company.servizi || [])
+        .map((s) => this.normalizeServizio(s))
+        .filter((s) => this.allowedServiziNormalized.includes(s));
+
+      const matchesServizi =
+        this.selectedServizi.length === 0 ||
+        this.selectedServizi.some((servizio) =>
+          normalizedCompanyServizi.includes(this.normalizeServizio(servizio))
+        );
+
       return (
         matchesFasciaFatturatoTotale &&
         matchesFatturatoEsg &&
         matchesDipendentiTotali &&
-        matchesDipendentiEsg
+        matchesDipendentiEsg &&
+        matchesServizi
       );
     });
 
@@ -340,6 +478,25 @@ export class HomeComponent implements OnInit {
     if (!selectedStillVisible) {
       this.selectedCompanyId = null;
     }
+  }
+
+  private get allowedServiziNormalized(): string[] {
+    return this.allowedServizi.map((s) => this.normalizeServizio(s));
+  }
+
+  private normalizeServizio(value: string): string {
+    return (value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/à/g, 'a')
+      .replace(/è/g, 'e')
+      .replace(/é/g, 'e')
+      .replace(/ì/g, 'i')
+      .replace(/ò/g, 'o')
+      .replace(/ù/g, 'u')
+      .replace(/\s+/g, ' ')
+      .replace(/\//g, '/')
+      .replace(/\s*,\s*/g, ', ');
   }
 
   private getUniqueOptions(values: string[]): string[] {
