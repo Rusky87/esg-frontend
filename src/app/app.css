@@ -1,52 +1,5 @@
 :host {
   display: block;
-  font-family: Arial, sans-serif;
-  background: #f7f7f7;
   min-height: 100vh;
-}
-
-.container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 24px;
-}
-
-h1 {
-  margin-bottom: 24px;
-  font-size: 32px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 20px;
-}
-
-.card {
-  border: 1px solid #ddd;
-  border-radius: 14px;
-  padding: 18px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.card h2 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 22px;
-}
-
-.card p {
-  margin: 8px 0;
-  line-height: 1.4;
-}
-
-.card ul {
-  margin-top: 6px;
-  margin-bottom: 12px;
-  padding-left: 18px;
-}
-
-.card li {
-  margin-bottom: 4px;
+  background: #f4f7fb;
 }
