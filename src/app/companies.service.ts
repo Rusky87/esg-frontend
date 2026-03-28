@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class CompaniesService {
   private http = inject(HttpClient);
-  private apiUrl = 'https://esg-backend-w1xt.onrender.com';
+  private apiUrl = 'https://esg-backend-w1xt.onrender.com/companies';
 
   getCompanies(): Observable<any[]> {
     return this.http.get<any[]>(this.apiUrl);
